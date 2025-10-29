@@ -1,5 +1,5 @@
-#!/bin/sh
-set -eu  # <<< removed pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Basic settings (can be overridden via .env)
 : "${NGINX_PORT:=8080}"
@@ -11,17 +11,17 @@ set -eu  # <<< removed pipefail
 BASE_URL="http://localhost:${NGINX_PORT}"
 BLUE_CHAOS="http://localhost:${BLUE_PORT}/chaos/start?mode=error"
 BLUE_CHAOS_STOP="http://localhost:${BLUE_PORT}/chaos/stop"
-GREEN_CHAOS_STOP="http://localhost:${GREEN_PORT}/chaos/stop"
+GREEN_CHAOS_STOP="http://localhost:${GREEN_PORT}/chaos/stop"   # <<< NEW
 
-# Reset any prior chaos on both Blue and Green
-curl -s -X POST "$BLUE_CHAOS_STOP" >/dev/null || true
-curl -s -X POST "$GREEN_CHAOS_STOP" >/dev/null || true
-sleep 1  # give Nginx a moment to stabilize
+# --- NEW: Reset any prior chaos on both Blue and Green ---
+curl -s -X POST "$BLUE_CHAOS_STOP" >/dev/null || true   # <<< NEW
+curl -s -X POST "$GREEN_CHAOS_STOP" >/dev/null || true  # <<< NEW
+sleep 1  # <<< NEW: give Nginx a moment to stabilize
 
 echo "1) Baseline check BEFORE triggering chaos: expect X-App-Pool: blue"
 resp_headers=$(curl -sI "${BASE_URL}/version")
 echo "$resp_headers"
-echo "$resp_headers" | grep -qi "X-App-Pool: blue" || { echo "Baseline not blue — abort"; exit 2; }
+grep -qi "X-App-Pool: blue" <<<"$resp_headers" || { echo "Baseline not blue — abort"; exit 2; }
 
 echo "2) Trigger chaos on BLUE (POST $BLUE_CHAOS)"
 curl -s -X POST "$BLUE_CHAOS" >/dev/null || { echo "Failed to POST /chaos/start"; exit 3; }
@@ -37,9 +37,10 @@ bad=0
 
 while [ $SECONDS -lt $end ]; do
   total=$((total + 1))
+  # capture http code and X-App-Pool header
   out=$(curl -s -i --max-time 5 "${BASE_URL}/version" || true)
-  code=$(echo "$out" | awk 'NR==1{print $2}' || echo "000")
-  pool=$(echo "$out" | grep -i '^X-App-Pool:' | awk '{print tolower($2)}' || echo "")
+  code=$(awk 'NR==1{print $2}' <<<"$out" || echo "000")
+  pool=$(grep -i '^X-App-Pool:' <<<"$out" | awk '{print tolower($2)}' || echo "")
   if [ "$code" != "200" ]; then
     bad=$((bad + 1))
   else
@@ -51,12 +52,14 @@ while [ $SECONDS -lt $end ]; do
 done
 
 echo "Results: total=$total, green=$green_count, bad=$bad"
+# Fail conditions
 if [ "$bad" -ne 0 ]; then
   echo "FAIL: non-200 responses detected (bad=$bad)"
   curl -s -X POST "$BLUE_CHAOS_STOP" >/dev/null || true
   exit 4
 fi
 
+# percentage green
 pct=$(( (green_count * 100) / total ))
 echo "Green percentage: ${pct}%"
 
