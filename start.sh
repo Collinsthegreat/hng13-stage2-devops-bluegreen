@@ -37,10 +37,3 @@ sed -e "s|\$PRIMARY|$PRIMARY|g" \
     nginx/nginx.conf.template > nginx/nginx.conf
 
 echo "Generated nginx/nginx.conf with PRIMARY=$PRIMARY BACKUP=$BACKUP (app port $APP_PORT)"
-
-# Start (or recreate) stack
-docker compose down --remove-orphans || true
-docker compose pull
-docker compose up -d
-
-echo "Stack started. Nginx: http://localhost:${NGINX_PORT}"
