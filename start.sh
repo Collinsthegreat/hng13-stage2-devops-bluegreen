@@ -1,5 +1,5 @@
 # --- start.sh ---
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 # Load env (if exists)
