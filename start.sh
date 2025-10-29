@@ -1,6 +1,6 @@
 # --- start.sh ---
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -eu  # <<< CHANGED: removed -o pipefail, works in sh
 
 # Load env (if exists)
 if [ -f .env ]; then
