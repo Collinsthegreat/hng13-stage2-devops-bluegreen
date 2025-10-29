@@ -1,0 +1,45 @@
+# --- docker-compose.yml ---
+version: "3.9"
+
+services:
+  app_blue:
+    image: ${BLUE_IMAGE}
+    container_name: app_blue
+    environment:
+      - APP_POOL=blue
+      - RELEASE_ID=${RELEASE_ID_BLUE}
+    ports:
+      - "${BLUE_PORT}:${APP_PORT}"
+    # ✅ Updated healthcheck: use CMD array form and hardcoded internal port 3000
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/healthz', res => process.exit(res.statusCode===200?0:1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app_green:
+    image: ${GREEN_IMAGE}
+    container_name: app_green
+    environment:
+      - APP_POOL=green
+      - RELEASE_ID=${RELEASE_ID_GREEN}
+    ports:
+      - "${GREEN_PORT}:${APP_PORT}"
+    # ✅ Updated healthcheck: use CMD array form and hardcoded internal port 3000
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/healthz', res => process.exit(res.statusCode===200?0:1))\""]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - app_blue
+      - app_green
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
