@@ -1,6 +1,6 @@
 # --- start.sh ---
-#!/bin/bash
-set -eu  # Removed pipefail for Railway compatibility
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Load env (if exists)
 if [ -f .env ]; then
@@ -18,22 +18,24 @@ fi
 
 # Choose primary/backup based on ACTIVE_POOL
 if [ "$ACTIVE_POOL" = "blue" ]; then
-  PRIMARY="app_blue"
-  BACKUP="app_green"
+  export PRIMARY="app_blue"
+  export BACKUP="app_green"
 else
-  PRIMARY="app_green"
-  BACKUP="app_blue"
+  export PRIMARY="app_green"
+  export BACKUP="app_blue"
 fi
 
 # Ensure nginx dir exists
 mkdir -p nginx
 
-# Render template -> nginx/nginx.conf using sed
-sed -e "s|\$PRIMARY|$PRIMARY|g" \
-    -e "s|\$BACKUP|$BACKUP|g" \
-    -e "s|\$APP_PORT|$APP_PORT|g" \
-    -e "s|\$PROXY_TIMEOUT|$PROXY_TIMEOUT|g" \
-    -e "s|\$REQUEST_TIMEOUT|$REQUEST_TIMEOUT|g" \
-    nginx/nginx.conf.template > nginx/nginx.conf
+# Render template -> nginx/nginx.conf
+envsubst '\$PRIMARY \$BACKUP \$APP_PORT \$PROXY_TIMEOUT \$REQUEST_TIMEOUT' < nginx/nginx.conf.template > nginx/nginx.conf
 
 echo "Generated nginx/nginx.conf with PRIMARY=$PRIMARY BACKUP=$BACKUP (app port $APP_PORT)"
+
+# Start (or recreate) stack
+docker compose down --remove-orphans || true
+docker compose pull
+docker compose up -d
+
+echo "Stack started. Nginx: http://localhost:${NGINX_PORT}"
