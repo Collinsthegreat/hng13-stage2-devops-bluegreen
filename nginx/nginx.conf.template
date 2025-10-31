@@ -1,9 +1,32 @@
 # --- nginx/nginx.conf.template ---
-# This template is rendered by start.sh into nginx/nginx.conf
 worker_processes  1;
-events { worker_connections 1024; }
+
+events {
+    worker_connections 1024;
+}
 
 http {
+    # Structured JSON logging for observability
+    log_format structured_json escape=json
+        '{'
+        '"time_local":"$time_local",'
+        '"remote_addr":"$remote_addr",'
+        '"method":"$request_method",'
+        '"uri":"$request_uri",'
+        '"status":$status,'
+        '"body_bytes_sent":$body_bytes_sent,'
+        '"request_time":$request_time,'
+        '"upstream_addr":"$upstream_addr",'
+        '"upstream_status":"$upstream_status",'
+        '"upstream_response_time":"$upstream_response_time",'
+        '"pool":"$upstream_http_x_app_pool",'
+        '"release":"$upstream_http_x_release_id"'
+        '}';
+
+    # Ensure access log file exists
+    access_log /var/log/nginx/access.log structured_json;
+    error_log /var/log/nginx/error.log warn;
+
     upstream backend {
         server ${PRIMARY}:${APP_PORT} max_fails=2 fail_timeout=5s;
         server ${BACKUP}:${APP_PORT} backup;
@@ -18,17 +41,14 @@ http {
             proxy_read_timeout ${REQUEST_TIMEOUT}s;
             proxy_send_timeout ${REQUEST_TIMEOUT}s;
 
-            # Keep original host/IP headers
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
 
-            # Ensure app headers pass through unchanged
             proxy_pass_header X-App-Pool;
             proxy_pass_header X-Release-Id;
 
-            # Retry policy: try backup on error/timeout/5xx
             proxy_next_upstream error timeout http_500 http_502 http_503 http_504;
             proxy_next_upstream_tries 2;
         }
