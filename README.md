@@ -108,12 +108,12 @@ Chaos simulation: Test failover behavior using /chaos/start and /chaos/stop endp
 
 Dynamic configuration: Nginx configuration is generated from environment variables.
 
-🚀 HNG Stage 3: Observability & Alerts (Log-Watcher + Slack Integration)
+HNG Stage 3: Observability & Alerts (Log-Watcher + Slack Integration)
 
 This stage extends the Blue/Green deployment by adding real-time observability and automated Slack alerts.
 A lightweight Python service continuously monitors Nginx access logs for failover events, upstream errors, and recovery states, providing DevOps visibility into production behavior.
 
-🔍 Overview
+ Overview
 
 Goal: Detect and alert on:
 
@@ -125,7 +125,7 @@ Recovery when the primary pool returns healthy
 
 All alerts are sent to Slack through a configurable Incoming Webhook.
 
-⚙️ Environment Variables (.env)
+ Environment Variables (.env)
 
 Add the following new variables in addition to your Stage 2 ones:
 
@@ -151,7 +151,7 @@ ALERT_COOLDOWN_SEC – cooldown before repeating alerts
 
 MAINTENANCE_MODE – optional flag to suppress alerts during planned toggles
 
-🧩 Components
+ Components
 1. Nginx
 
 Logs pool, release ID, upstream status, and latency.
@@ -184,13 +184,13 @@ Sends alerts to Slack with cooldown and deduplication logic.
 
 Alerts are human-readable and color-coded:
 
-⚠️ Failover Detected — Blue → Green or Green → Blue
+ Failover Detected — Blue → Green or Green → Blue
 
-🚨 High Error Rate — 5xx errors exceed threshold
+ High Error Rate — 5xx errors exceed threshold
 
-✅ Recovery Detected — Primary pool restored
+ Recovery Detected — Primary pool restored
 
-🧪 Running and Testing
+ Running and Testing
 1. Start Services
 docker compose up -d --build
 
@@ -222,7 +222,7 @@ curl -X POST http://localhost:8082/chaos/start?mode=error
 
 Expected Slack alert:
 
-⚠️ Failover Detected — Traffic switched from Blue → Green
+ Failover Detected — Traffic switched from Blue → Green
 
 4. Recovery Test
 
@@ -233,34 +233,28 @@ curl -X POST http://localhost:8081/chaos/stop   # or 8082
 
 Expected Slack alert:
 
-✅ Recovery Detected — Blue is now serving traffic again
+ Recovery Detected — Blue is now serving traffic again
 
 5. Error-Rate Simulation
 
 Simulate 5xx errors to breach threshold; watcher triggers alert:
 
-🚨 High Error Rate — 5xx > 2% over last 200 requests
+ High Error Rate — 5xx > 2% over last 200 requests
 
-📸 Verification Screenshots (Required)
-Screenshot	Description
-1️⃣	Slack Alert – Failover Event
-2️⃣	Slack Alert – High Error Rate
-3️⃣	Nginx Log Snippet showing structured fields
-📚 Runbook Summary
+ Runbook Summary
 Alert	Meaning	Operator Action
-⚠️ Failover Detected	Active pool failed; backup took over	Check health of primary container
-🚨 High Error Rate	Error-rate threshold exceeded	Inspect upstream logs, confirm root cause
-✅ Recovery Detected	Primary pool recovered	Monitor stability before removing maintenance mode
-🧰 Suppressing Alerts During Maintenance
+ Failover Detected	Active pool failed; backup took over	Check health of primary container
+ High Error Rate	Error-rate threshold exceeded	Inspect upstream logs, confirm root cause
+ Recovery Detected	Primary pool recovered	Monitor stability before removing maintenance mode
+ Suppressing Alerts During Maintenance
 
 If performing planned deploys:
 
 MAINTENANCE_MODE=true
 
-
 Then restart the watcher container. Alerts are suppressed until set back to false.
 
-📁 Repository Structure
+ Repository Structure
 .
 ├── docker-compose.yml
 ├── nginx/
@@ -276,7 +270,7 @@ Then restart the watcher container. Alerts are suppressed until set back to fals
     ├── error_rate_alert.png
     └── nginx_log.png
 
-✅ Acceptance Criteria Checklist
+ Acceptance Criteria Checklist
 
  Custom Nginx log format with pool/release/upstream info
 
@@ -292,7 +286,7 @@ Then restart the watcher container. Alerts are suppressed until set back to fals
 
  Stage 2 baseline and chaos tests still functional
 
-🏁 Conclusion
+ Conclusion
 
 This project now delivers a complete Blue/Green deployment pipeline enhanced with observability, alerting, and operational insight.
 It simulates real-world production readiness by ensuring failures, recoveries, and performance degradations are instantly visible in Slack.
