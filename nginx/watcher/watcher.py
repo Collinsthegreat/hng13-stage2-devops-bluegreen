@@ -24,21 +24,21 @@ last_alert_time = {}
 
 def post_slack(text, title="Alert"):
     if not WEBHOOK:
-        print("⚠️ SLACK_WEBHOOK_URL not set; would post:", title, text)
+        print(" SLACK_WEBHOOK_URL not set; would post:", title, text)
         return
     payload = {"text": f"*{title}*\n{text}"}
     try:
         r = requests.post(WEBHOOK, json=payload, timeout=5)
-        print(f"✅ Slack POST {r.status_code}")
+        print(f" Slack POST {r.status_code}")
     except Exception as e:
         print("❌ Failed to send Slack:", e)
 
 
 def wait_for_file(path):
-    print(f"⏳ Waiting for log file {path} ...")
+    print(f" Waiting for log file {path} ...")
     while not os.path.exists(path):
         time.sleep(1)
-    print(f"✅ Found log file: {path}")
+    print(f" Found log file: {path}")
 
 
 def tail_file(path):
@@ -58,7 +58,7 @@ def main():
     print("👀 Starting to watch log file...")
 
     for line in tail_file(LOG_PATH):
-        print("📜 DEBUG:", line)
+        print(" DEBUG:", line)
         m = RE.search(line)
         if not m:
             continue
