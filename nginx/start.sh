@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
 
-# Substitute environment variables into the nginx config
-envsubst '$PRIMARY $BACKUP $APP_PORT $PROXY_TIMEOUT $REQUEST_TIMEOUT' \
+# Substitute environment variables
+envsubst '$PRIMARY $BACKUP $PORT $PROXY_TIMEOUT $REQUEST_TIMEOUT' \
     < /etc/nginx/nginx.conf.template \
     > /etc/nginx/nginx.conf
 
-echo "Nginx config generated with PRIMARY=$PRIMARY BACKUP=$BACKUP APP_PORT=$APP_PORT"
+echo "Nginx config generated with PRIMARY=$PRIMARY BACKUP=$BACKUP PORT=$PORT"
 
-# Start nginx
+# Start Nginx in foreground
 nginx -g 'daemon off;'
+
+
+

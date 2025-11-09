@@ -28,8 +28,8 @@ http {
     error_log /var/log/nginx/error.log warn;
 
     upstream backend {
-        server ${PRIMARY}:${APP_PORT} max_fails=2 fail_timeout=5s;
-        server ${BACKUP}:${APP_PORT} backup;
+        server ${PRIMARY}:${PORT} max_fails=2 fail_timeout=5s;
+        server ${BACKUP}:${PORT} backup;
     }
 
     server {
