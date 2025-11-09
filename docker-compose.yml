@@ -9,11 +9,11 @@ services:
       - RELEASE_ID=${RELEASE_ID_BLUE}
       - PORT=${PORT:-3000}
     ports:
-      - "8081:3000"
+      - "8081:${PORT:-3000}" 
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/healthz || exit 1"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${PORT:-3000}/healthz"]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -27,11 +27,12 @@ services:
       - RELEASE_ID=${RELEASE_ID_GREEN}
       - PORT=${PORT:-3000}
     ports:
-      - "8082:3000"
+      - "8082:${PORT:-3000}"
+
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/healthz || exit 1"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${PORT:-3000}/healthz"]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -41,10 +42,8 @@ services:
     build: ./nginx
     container_name: nginx
     depends_on:
-      app_blue:
-        condition: service_healthy
-      app_green:
-        condition: service_healthy
+      - app_blue
+      - app_green
     ports:
       - "8080:80"
     volumes:
